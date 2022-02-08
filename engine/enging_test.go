@@ -20,7 +20,7 @@ func testEngineConfig() EngineConfig {
 		HealthCheckConfig: healthcheck.HealthCheckConfig{
 			HistoryLength: 10,
 			Passphrase:    somePassphrase,
-			GracePeriod:   50 * time.Millisecond,
+			GracePeriod:   500 * time.Millisecond,
 		},
 		SchedulerConfig: scheduler.SchedulerConfig{
 			SampleRate: 100 * time.Millisecond,
@@ -53,12 +53,25 @@ func TestHealthNoPing(t *testing.T) {
 
 func TestHealthyAlways(t *testing.T) {
 	notif := &notifierMock{}
+	engineTestHelpert(t, notif, 150*time.Millisecond)
+	notif.AssertCalled(t, "NotifyStateChange", general.StateHealthy)
+}
+
+func TestHealthyThenUnhealthy(t *testing.T) {
+	notif := &notifierMock{}
+	engineTestHelpert(t, notif, time.Second)
+
+	notif.AssertCalled(t, "NotifyStateChange", general.StateHealthy)
+	notif.AssertCalled(t, "NotifyStateChange", general.StateUnhealthy)
+}
+
+func engineTestHelpert(t *testing.T, notif *notifierMock, duration time.Duration) {
 	notif.On("NotifyStateChange", mock.Anything).Return(nil)
 	engine := NewEngine(testEngineConfig(), notif)
 	err := engine.Init()
 	assert.NoError(t, err)
 
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(200*time.Millisecond))
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(duration))
 	defer cancel()
 	err = engine.Start(ctx)
 	assert.NoError(t, err)
@@ -67,7 +80,6 @@ func TestHealthyAlways(t *testing.T) {
 	assert.NoError(t, err)
 
 	<-ctx.Done()
-	notif.AssertCalled(t, "NotifyStateChange", general.StateHealthy)
 }
 
 type notifierMock struct {
