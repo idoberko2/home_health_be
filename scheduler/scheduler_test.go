@@ -15,9 +15,8 @@ var errTest = errors.New("some error")
 
 func testScheduler(stateHandler StateHandler) Scheduler {
 	return NewScheduler(SchedulerConfig{
-		StateHandler: stateHandler,
-		SampleRate:   100 * time.Millisecond,
-	})
+		SampleRate: 100 * time.Millisecond,
+	}, stateHandler)
 }
 
 func TestSchedulerStart(t *testing.T) {

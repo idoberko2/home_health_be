@@ -5,6 +5,5 @@ import (
 )
 
 type SchedulerConfig struct {
-	StateHandler
 	SampleRate time.Duration
 }
