@@ -1,8 +1,9 @@
 package scheduler
 
+import "context"
+
 type Scheduler interface {
-	Start() error
-	Stop() error
+	Start(ctx context.Context) error
 }
 
 func NewScheduler(cfg SchedulerConfig) Scheduler {
@@ -15,10 +16,6 @@ type scheduler struct {
 	cfg SchedulerConfig
 }
 
-func (s *scheduler) Start() error {
-	return nil
-}
-
-func (s *scheduler) Stop() error {
+func (s *scheduler) Start(ctx context.Context) error {
 	return nil
 }
