@@ -46,6 +46,24 @@ func TestSchedulerCheckStateError(t *testing.T) {
 	stateHandlerMock.On("CheckState").Return(general.StateHealthy, errTest)
 	stateHandlerMock.On("OnStateCheck", general.StateHealthy).Return(nil)
 	scheduler := testScheduler(stateHandlerMock)
+	schedulerErrHelper(t, scheduler)
+
+	stateHandlerMock.AssertNumberOfCalls(t, "CheckState", 1)
+	stateHandlerMock.AssertNotCalled(t, "OnStateCheck", mock.Anything)
+}
+
+func TestSchedulerOnStateCheckError(t *testing.T) {
+	stateHandlerMock := &stateHandler{}
+	stateHandlerMock.On("CheckState").Return(general.StateHealthy, nil)
+	stateHandlerMock.On("OnStateCheck", general.StateHealthy).Return(errTest)
+	scheduler := testScheduler(stateHandlerMock)
+	schedulerErrHelper(t, scheduler)
+
+	stateHandlerMock.AssertNumberOfCalls(t, "CheckState", 1)
+	stateHandlerMock.AssertNumberOfCalls(t, "OnStateCheck", 1)
+}
+
+func schedulerErrHelper(t *testing.T, scheduler Scheduler) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(110*time.Millisecond))
 	defer cancel()
 
@@ -60,8 +78,6 @@ func TestSchedulerCheckStateError(t *testing.T) {
 	}
 
 	assert.Equal(t, expected, errTest)
-	stateHandlerMock.AssertNumberOfCalls(t, "CheckState", 1)
-	stateHandlerMock.AssertNotCalled(t, "OnStateCheck", mock.Anything)
 }
 
 type stateHandler struct {
