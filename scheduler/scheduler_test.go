@@ -2,12 +2,16 @@ package scheduler
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/idoberko2/home_health_be/general"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var errTest = errors.New("some error")
 
 func testScheduler(stateHandler StateHandler) Scheduler {
 	return NewScheduler(SchedulerConfig{
@@ -35,6 +39,29 @@ func TestSchedulerStart(t *testing.T) {
 
 	stateHandlerMock.AssertNumberOfCalls(t, "CheckState", 5)
 	stateHandlerMock.AssertNumberOfCalls(t, "OnStateCheck", 5)
+}
+
+func TestSchedulerCheckStateError(t *testing.T) {
+	stateHandlerMock := &stateHandler{}
+	stateHandlerMock.On("CheckState").Return(general.StateHealthy, errTest)
+	stateHandlerMock.On("OnStateCheck", general.StateHealthy).Return(nil)
+	scheduler := testScheduler(stateHandlerMock)
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(110*time.Millisecond))
+	defer cancel()
+
+	errReporter := make(chan error)
+	scheduler.Start(ctx, errReporter)
+
+	var expected error
+	select {
+	case err := <-errReporter:
+		expected = err
+	case <-ctx.Done():
+	}
+
+	assert.Equal(t, expected, errTest)
+	stateHandlerMock.AssertNumberOfCalls(t, "CheckState", 1)
+	stateHandlerMock.AssertNotCalled(t, "OnStateCheck", mock.Anything)
 }
 
 type stateHandler struct {
