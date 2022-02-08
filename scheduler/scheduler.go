@@ -1,9 +1,12 @@
 package scheduler
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type Scheduler interface {
-	Start(ctx context.Context) error
+	Start(ctx context.Context, errReporter chan error)
 }
 
 func NewScheduler(cfg SchedulerConfig) Scheduler {
@@ -16,6 +19,25 @@ type scheduler struct {
 	cfg SchedulerConfig
 }
 
-func (s *scheduler) Start(ctx context.Context) error {
-	return nil
+func (s *scheduler) Start(ctx context.Context, errReporter chan error) {
+	ticker := time.NewTicker(s.cfg.SampleRate)
+	for {
+		select {
+		case <-ticker.C:
+			{
+				state, err := s.cfg.StateHandler.CheckState()
+				if err != nil {
+					errReporter <- err
+					continue
+				}
+				if err := s.cfg.StateHandler.OnStateCheck(state); err != nil {
+					errReporter <- err
+				}
+			}
+		case <-ctx.Done():
+			{
+				return
+			}
+		}
+	}
 }

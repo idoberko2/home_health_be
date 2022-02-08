@@ -24,8 +24,14 @@ func TestSchedulerStart(t *testing.T) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(510*time.Millisecond))
 	defer cancel()
 
-	scheduler.Start(ctx)
-	<-time.After(600 * time.Millisecond)
+	errReporter := make(chan error)
+	scheduler.Start(ctx, errReporter)
+
+	select {
+	case err := <-errReporter:
+		t.Errorf("unexpected error %s", err)
+	case <-ctx.Done():
+	}
 
 	stateHandlerMock.AssertNumberOfCalls(t, "CheckState", 5)
 	stateHandlerMock.AssertNumberOfCalls(t, "OnStateCheck", 5)
