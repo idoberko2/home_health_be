@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/idoberko2/home_health_be/general"
 	"github.com/idoberko2/home_health_be/healthcheck"
@@ -20,6 +21,7 @@ func NewEngine(cfg EngineConfig, notifier notifier.Notifier) Engine {
 	return &engine{
 		cfg:      cfg,
 		notifier: notifier,
+		state:    general.StateUndefined,
 	}
 }
 
@@ -47,6 +49,7 @@ func (e *engine) Start(ctx context.Context) error {
 	}
 
 	go e.scheduler.Start(ctx, e.errReporter)
+	go e.reportError(ctx)
 	return nil
 }
 
@@ -57,7 +60,7 @@ func (e *engine) Ping(passphrase string) error {
 func (e *engine) CheckState() (general.State, error) {
 	isHealthy, err := e.healthCheck.IsHealthy()
 	if err != nil {
-		return general.StateUnhealthy, err
+		return general.StateUndefined, err
 	}
 
 	if !isHealthy {
@@ -72,7 +75,21 @@ func (e *engine) OnStateCheck(newState general.State) error {
 		return nil
 	}
 
+	e.state = newState
+
 	return e.notifier.NotifyStateChange(newState)
+}
+
+func (e *engine) reportError(ctx context.Context) {
+	for {
+		select {
+		case err := <-e.errReporter:
+			{
+				log.Fatal("error caught", err)
+			}
+		case <-ctx.Done():
+		}
+	}
 }
 
 var ErrNotInitialized = errors.New("not initialized")

@@ -42,7 +42,7 @@ func TestSchedulerStart(t *testing.T) {
 
 func TestSchedulerCheckStateError(t *testing.T) {
 	stateHandlerMock := &stateHandler{}
-	stateHandlerMock.On("CheckState").Return(general.StateHealthy, errTest)
+	stateHandlerMock.On("CheckState").Return(general.StateUndefined, errTest)
 	stateHandlerMock.On("OnStateCheck", general.StateHealthy).Return(nil)
 	scheduler := testScheduler(stateHandlerMock)
 	schedulerErrHelper(t, scheduler)

@@ -3,6 +3,7 @@ package general
 type State int
 
 const (
-	StateHealthy State = iota
+	StateUndefined State = -1
+	StateHealthy   State = iota
 	StateUnhealthy
 )
