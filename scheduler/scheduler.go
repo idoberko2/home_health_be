@@ -21,10 +21,6 @@ type scheduler struct {
 
 func (s *scheduler) Start(ctx context.Context, errReporter chan error) {
 	ticker := time.NewTicker(s.cfg.SampleRate)
-	go s.start(ctx, errReporter, ticker)
-}
-
-func (s *scheduler) start(ctx context.Context, errReporter chan error, ticker *time.Ticker) {
 	for {
 		select {
 		case <-ticker.C:
