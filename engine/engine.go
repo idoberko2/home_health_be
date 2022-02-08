@@ -13,6 +13,7 @@ import (
 type Engine interface {
 	Init() error
 	Start(ctx context.Context) error
+	Ping(passphrase string) error
 }
 
 func NewEngine(cfg EngineConfig, notifier notifier.Notifier) Engine {
@@ -42,19 +43,36 @@ func (e *engine) Init() error {
 
 func (e *engine) Start(ctx context.Context) error {
 	if !e.ready {
-		return errNotInitialized
+		return ErrNotInitialized
 	}
 
 	go e.scheduler.Start(ctx, e.errReporter)
 	return nil
 }
 
+func (e *engine) Ping(passphrase string) error {
+	return e.healthCheck.Ping(passphrase)
+}
+
 func (e *engine) CheckState() (general.State, error) {
+	isHealthy, err := e.healthCheck.IsHealthy()
+	if err != nil {
+		return general.StateUnhealthy, err
+	}
+
+	if !isHealthy {
+		return general.StateUnhealthy, nil
+	}
+
 	return general.StateHealthy, nil
 }
 
-func (e *engine) OnStateCheck(general.State) error {
-	return nil
+func (e *engine) OnStateCheck(newState general.State) error {
+	if newState == e.state {
+		return nil
+	}
+
+	return e.notifier.NotifyStateChange(newState)
 }
 
-var errNotInitialized = errors.New("not initialized")
+var ErrNotInitialized = errors.New("not initialized")
