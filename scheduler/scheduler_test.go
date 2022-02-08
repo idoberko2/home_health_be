@@ -15,9 +15,8 @@ var errTest = errors.New("some error")
 
 func testScheduler(stateHandler StateHandler) Scheduler {
 	return NewScheduler(SchedulerConfig{
-		StateHandler: stateHandler,
-		SampleRate:   100 * time.Millisecond,
-	})
+		SampleRate: 100 * time.Millisecond,
+	}, stateHandler)
 }
 
 func TestSchedulerStart(t *testing.T) {
@@ -29,7 +28,7 @@ func TestSchedulerStart(t *testing.T) {
 	defer cancel()
 
 	errReporter := make(chan error)
-	scheduler.Start(ctx, errReporter)
+	go scheduler.Start(ctx, errReporter)
 
 	select {
 	case err := <-errReporter:
@@ -43,7 +42,7 @@ func TestSchedulerStart(t *testing.T) {
 
 func TestSchedulerCheckStateError(t *testing.T) {
 	stateHandlerMock := &stateHandler{}
-	stateHandlerMock.On("CheckState").Return(general.StateHealthy, errTest)
+	stateHandlerMock.On("CheckState").Return(general.StateUndefined, errTest)
 	stateHandlerMock.On("OnStateCheck", general.StateHealthy).Return(nil)
 	scheduler := testScheduler(stateHandlerMock)
 	schedulerErrHelper(t, scheduler)
@@ -68,7 +67,7 @@ func schedulerErrHelper(t *testing.T, scheduler Scheduler) {
 	defer cancel()
 
 	errReporter := make(chan error)
-	scheduler.Start(ctx, errReporter)
+	go scheduler.Start(ctx, errReporter)
 
 	var expected error
 	select {
