@@ -17,7 +17,7 @@ type Engine interface {
 	Ping(passphrase string) error
 }
 
-func NewEngine(cfg EngineConfig, notifier notifier.Notifier) Engine {
+func New(cfg EngineConfig, notifier notifier.Notifier) Engine {
 	return &engine{
 		cfg:      cfg,
 		notifier: notifier,
@@ -36,8 +36,8 @@ type engine struct {
 }
 
 func (e *engine) Init() error {
-	e.healthCheck = healthcheck.NewHealthCheck(e.cfg.HealthCheckConfig)
-	e.scheduler = scheduler.NewScheduler(e.cfg.SchedulerConfig, e)
+	e.healthCheck = healthcheck.New(e.cfg.HealthCheckConfig)
+	e.scheduler = scheduler.New(e.cfg.SchedulerConfig, e)
 	e.ready = true
 
 	return nil

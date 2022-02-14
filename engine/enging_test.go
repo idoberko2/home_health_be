@@ -29,7 +29,7 @@ func testEngineConfig() EngineConfig {
 }
 
 func TestStartNoInit(t *testing.T) {
-	engine := NewEngine(testEngineConfig(), nil)
+	engine := New(testEngineConfig(), nil)
 	err := engine.Start(context.Background())
 
 	assert.Equal(t, ErrNotInitialized, err)
@@ -38,7 +38,7 @@ func TestStartNoInit(t *testing.T) {
 func TestHealthNoPing(t *testing.T) {
 	notif := &notifierMock{}
 	notif.On("NotifyStateChange", mock.Anything).Return(nil)
-	engine := NewEngine(testEngineConfig(), notif)
+	engine := New(testEngineConfig(), notif)
 	err := engine.Init()
 	assert.NoError(t, err)
 
@@ -67,7 +67,7 @@ func TestHealthyThenUnhealthy(t *testing.T) {
 
 func engineTestHelpert(t *testing.T, notif *notifierMock, duration time.Duration) {
 	notif.On("NotifyStateChange", mock.Anything).Return(nil)
-	engine := NewEngine(testEngineConfig(), notif)
+	engine := New(testEngineConfig(), notif)
 	err := engine.Init()
 	assert.NoError(t, err)
 
