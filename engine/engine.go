@@ -3,7 +3,6 @@ package engine
 import (
 	"context"
 	"errors"
-	"log"
 
 	"github.com/idoberko2/home_health_be/general"
 	"github.com/idoberko2/home_health_be/healthcheck"
@@ -31,7 +30,6 @@ type engine struct {
 	scheduler   scheduler.Scheduler
 	notifier    notifier.Notifier
 	state       general.State
-	errReporter chan error
 	ready       bool
 }
 
@@ -48,8 +46,7 @@ func (e *engine) Start(ctx context.Context) error {
 		return ErrNotInitialized
 	}
 
-	go e.scheduler.Start(ctx, e.errReporter)
-	go e.reportError(ctx)
+	e.scheduler.Start(ctx, e.cfg.errReporter)
 	return nil
 }
 
@@ -78,18 +75,6 @@ func (e *engine) OnStateCheck(newState general.State) error {
 	e.state = newState
 
 	return e.notifier.NotifyStateChange(newState)
-}
-
-func (e *engine) reportError(ctx context.Context) {
-	for {
-		select {
-		case err := <-e.errReporter:
-			{
-				log.Fatal("error caught", err)
-			}
-		case <-ctx.Done():
-		}
-	}
 }
 
 var ErrNotInitialized = errors.New("not initialized")
