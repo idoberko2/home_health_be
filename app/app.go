@@ -22,7 +22,6 @@ type app struct{}
 
 func (a *app) Run() {
 	ctx := context.Background()
-
 	g, grpCtx := errgroup.WithContext(ctx)
 	g.Go(getStartEngine(grpCtx))
 
@@ -33,7 +32,12 @@ func (a *app) Run() {
 
 func getStartEngine(ctx context.Context) func() error {
 	return func() error {
-		engine := engine.New(engine.EngineConfig{}, notifier.NewLogNotifier())
+		cfg, errCfg := ReadEngineConfig()
+		if errCfg != nil {
+			return errCfg
+		}
+
+		engine := engine.New(cfg, notifier.NewLogNotifier())
 		if err := engine.Init(); err != nil {
 			return err
 		}
