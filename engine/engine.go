@@ -3,12 +3,13 @@ package engine
 import (
 	"context"
 	"errors"
-	"log"
 
 	"github.com/idoberko2/home_health_be/general"
 	"github.com/idoberko2/home_health_be/healthcheck"
 	"github.com/idoberko2/home_health_be/notifier"
 	"github.com/idoberko2/home_health_be/scheduler"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Engine interface {
@@ -17,7 +18,7 @@ type Engine interface {
 	Ping(passphrase string) error
 }
 
-func NewEngine(cfg EngineConfig, notifier notifier.Notifier) Engine {
+func New(cfg EngineConfig, notifier notifier.Notifier) Engine {
 	return &engine{
 		cfg:      cfg,
 		notifier: notifier,
@@ -31,13 +32,12 @@ type engine struct {
 	scheduler   scheduler.Scheduler
 	notifier    notifier.Notifier
 	state       general.State
-	errReporter chan error
 	ready       bool
 }
 
 func (e *engine) Init() error {
-	e.healthCheck = healthcheck.NewHealthCheck(e.cfg.HealthCheckConfig)
-	e.scheduler = scheduler.NewScheduler(e.cfg.SchedulerConfig, e)
+	e.healthCheck = healthcheck.New(e.cfg.HealthCheckConfig)
+	e.scheduler = scheduler.New(e.cfg.SchedulerConfig, e)
 	e.ready = true
 
 	return nil
@@ -48,8 +48,9 @@ func (e *engine) Start(ctx context.Context) error {
 		return ErrNotInitialized
 	}
 
-	go e.scheduler.Start(ctx, e.errReporter)
-	go e.reportError(ctx)
+	log.Info("starting scheduler...")
+	e.scheduler.Start(ctx, e.cfg.errReporter)
+	log.Info("scheduler done")
 	return nil
 }
 
@@ -78,18 +79,6 @@ func (e *engine) OnStateCheck(newState general.State) error {
 	e.state = newState
 
 	return e.notifier.NotifyStateChange(newState)
-}
-
-func (e *engine) reportError(ctx context.Context) {
-	for {
-		select {
-		case err := <-e.errReporter:
-			{
-				log.Fatal("error caught", err)
-			}
-		case <-ctx.Done():
-		}
-	}
 }
 
 var ErrNotInitialized = errors.New("not initialized")

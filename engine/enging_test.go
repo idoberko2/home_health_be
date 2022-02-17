@@ -29,7 +29,7 @@ func testEngineConfig() EngineConfig {
 }
 
 func TestStartNoInit(t *testing.T) {
-	engine := NewEngine(testEngineConfig(), nil)
+	engine := New(testEngineConfig(), nil)
 	err := engine.Start(context.Background())
 
 	assert.Equal(t, ErrNotInitialized, err)
@@ -38,14 +38,13 @@ func TestStartNoInit(t *testing.T) {
 func TestHealthNoPing(t *testing.T) {
 	notif := &notifierMock{}
 	notif.On("NotifyStateChange", mock.Anything).Return(nil)
-	engine := NewEngine(testEngineConfig(), notif)
+	engine := New(testEngineConfig(), notif)
 	err := engine.Init()
 	assert.NoError(t, err)
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(110*time.Millisecond))
 	defer cancel()
-	err = engine.Start(ctx)
-	assert.NoError(t, err)
+	go engine.Start(ctx)
 
 	<-ctx.Done()
 	notif.AssertNotCalled(t, "NotifyStateChange", mock.Anything)
@@ -67,14 +66,13 @@ func TestHealthyThenUnhealthy(t *testing.T) {
 
 func engineTestHelpert(t *testing.T, notif *notifierMock, duration time.Duration) {
 	notif.On("NotifyStateChange", mock.Anything).Return(nil)
-	engine := NewEngine(testEngineConfig(), notif)
+	engine := New(testEngineConfig(), notif)
 	err := engine.Init()
 	assert.NoError(t, err)
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(duration))
 	defer cancel()
-	err = engine.Start(ctx)
-	assert.NoError(t, err)
+	go engine.Start(ctx)
 
 	err = engine.Ping(somePassphrase)
 	assert.NoError(t, err)

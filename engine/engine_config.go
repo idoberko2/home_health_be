@@ -8,4 +8,5 @@ import (
 type EngineConfig struct {
 	healthcheck.HealthCheckConfig
 	scheduler.SchedulerConfig
+	errReporter chan error
 }

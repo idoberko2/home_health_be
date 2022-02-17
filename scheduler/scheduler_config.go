@@ -5,5 +5,5 @@ import (
 )
 
 type SchedulerConfig struct {
-	SampleRate time.Duration
+	SampleRate time.Duration `split_words:"true" default:"10s"`
 }

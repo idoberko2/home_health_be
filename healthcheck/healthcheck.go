@@ -11,7 +11,7 @@ type HealthCheck interface {
 	GetHistory() ([]time.Time, error)
 }
 
-func NewHealthCheck(cfg HealthCheckConfig) HealthCheck {
+func New(cfg HealthCheckConfig) HealthCheck {
 	return &healthcheck{
 		cfg:         cfg,
 		pingHistory: make([]time.Time, cfg.HistoryLength),

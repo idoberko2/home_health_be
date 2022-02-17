@@ -9,7 +9,7 @@ type Scheduler interface {
 	Start(ctx context.Context, errReporter chan error)
 }
 
-func NewScheduler(cfg SchedulerConfig, stateHandler StateHandler) Scheduler {
+func New(cfg SchedulerConfig, stateHandler StateHandler) Scheduler {
 	return &scheduler{
 		cfg:          cfg,
 		stateHandler: stateHandler,

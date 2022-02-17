@@ -11,7 +11,7 @@ const somePassphrase = "somePassphrase"
 const someHistoryLength = 10
 
 func testEngine() HealthCheck {
-	return NewHealthCheck(HealthCheckConfig{
+	return New(HealthCheckConfig{
 		HistoryLength: someHistoryLength,
 		Passphrase:    somePassphrase,
 		GracePeriod:   time.Second,
