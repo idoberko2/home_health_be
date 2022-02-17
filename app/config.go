@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/idoberko2/home_health_be/engine"
+	"github.com/idoberko2/home_health_be/server"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
@@ -23,6 +24,20 @@ func ReadEngineConfig() (engine.EngineConfig, error) {
 	return cfg, nil
 }
 
+func ReadServerConfig() (server.ServerConfig, error) {
+	var cfg server.ServerConfig
+
+	if err := envconfig.Process(appPrefix, &cfg); err != nil {
+		return cfg, errors.Wrap(err, "error processing server config")
+	}
+
+	if cfg.Port == 0 {
+		return server.ServerConfig{}, ErrEmptyPort
+	}
+
+	return cfg, nil
+}
+
 func ReadAppConfig() (AppConfig, error) {
 	var cfg AppConfig
 
@@ -34,3 +49,4 @@ func ReadAppConfig() (AppConfig, error) {
 }
 
 var ErrEmptyPassphrase = errors.New("passphrase is not set")
+var ErrEmptyPort = errors.New("port is not set")
