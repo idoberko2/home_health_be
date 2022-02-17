@@ -19,10 +19,14 @@ type App interface {
 }
 
 func New() App {
-	return &app{}
+	return &app{
+		errReporter: make(chan error),
+	}
 }
 
-type app struct{}
+type app struct {
+	errReporter chan error
+}
 
 func (a *app) Run() {
 	appConfig, err := ReadAppConfig()
@@ -43,8 +47,16 @@ func (a *app) Run() {
 	g, grpCtx := errgroup.WithContext(ctx)
 	g.Go(getStartEngine(grpCtx))
 
+	go a.reportSchedulerErrors()
+
 	if err := g.Wait(); err != nil {
 		log.WithError(err).Error("did not finish properly")
+	}
+}
+
+func (a *app) reportSchedulerErrors() {
+	for err := range a.errReporter {
+		log.WithError(err).Error("scheduler error")
 	}
 }
 
