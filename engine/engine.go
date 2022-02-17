@@ -8,6 +8,8 @@ import (
 	"github.com/idoberko2/home_health_be/healthcheck"
 	"github.com/idoberko2/home_health_be/notifier"
 	"github.com/idoberko2/home_health_be/scheduler"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Engine interface {
@@ -46,7 +48,9 @@ func (e *engine) Start(ctx context.Context) error {
 		return ErrNotInitialized
 	}
 
+	log.Info("starting scheduler...")
 	e.scheduler.Start(ctx, e.cfg.errReporter)
+	log.Info("scheduler done")
 	return nil
 }
 

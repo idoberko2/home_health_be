@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/idoberko2/home_health_be/engine"
 	"github.com/idoberko2/home_health_be/notifier"
@@ -31,7 +33,9 @@ func (a *app) Run() {
 		}
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	gracefulShutdown(cancel)
+
 	g, grpCtx := errgroup.WithContext(ctx)
 	g.Go(getStartEngine(grpCtx))
 
@@ -54,4 +58,20 @@ func getStartEngine(ctx context.Context) func() error {
 
 		return engine.Start(ctx)
 	}
+}
+
+func gracefulShutdown(terminate func()) {
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+	)
+
+	go func() {
+		s := <-sigc
+		log.WithField("signal", s.String()).Info("received signal. terminating...")
+		terminate()
+	}()
 }
