@@ -84,6 +84,12 @@ type notifierMock struct {
 	mock.Mock
 }
 
+func (n *notifierMock) Init() error {
+	args := n.Called()
+
+	return args.Error(0)
+}
+
 func (n *notifierMock) NotifyStateChange(state general.State) error {
 	log.Printf("notify state change %d\n", state)
 	args := n.Called(state)
