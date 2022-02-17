@@ -21,4 +21,14 @@ func ReadEngineConfig() (engine.EngineConfig, error) {
 	return cfg, nil
 }
 
+func ReadAppConfig() (AppConfig, error) {
+	var cfg AppConfig
+
+	if err := envconfig.Process("hc", &cfg); err != nil {
+		return cfg, errors.Wrap(err, "error processing app config")
+	}
+
+	return cfg, nil
+}
+
 var ErrEmptyPassphrase = errors.New("passphrase is not set")

@@ -25,8 +25,12 @@ func New() App {
 type app struct{}
 
 func (a *app) Run() {
-	avoiddotenv := os.Getenv("HC_AVOID_DOTENV")
-	if avoiddotenv == "" {
+	appConfig, err := ReadAppConfig()
+	if err != nil {
+		log.WithError(err).Fatal("error reading app config")
+	}
+
+	if !appConfig.AvoidDotEnv {
 		err := godotenv.Load()
 		if err != nil {
 			log.WithError(err).Fatal("Error loading .env file")
