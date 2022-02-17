@@ -7,10 +7,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+const appPrefix = "hc"
+
 func ReadEngineConfig() (engine.EngineConfig, error) {
 	var cfg engine.EngineConfig
 
-	if err := envconfig.Process("hc", &cfg); err != nil {
+	if err := envconfig.Process(appPrefix, &cfg); err != nil {
 		return cfg, errors.Wrap(err, "error processing engine config")
 	}
 
@@ -24,7 +26,7 @@ func ReadEngineConfig() (engine.EngineConfig, error) {
 func ReadAppConfig() (AppConfig, error) {
 	var cfg AppConfig
 
-	if err := envconfig.Process("hc", &cfg); err != nil {
+	if err := envconfig.Process(appPrefix, &cfg); err != nil {
 		return cfg, errors.Wrap(err, "error processing app config")
 	}
 
