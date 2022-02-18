@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/idoberko2/home_health_be/engine"
+	"github.com/idoberko2/home_health_be/notifier"
 	"github.com/idoberko2/home_health_be/server"
 
 	"github.com/kelseyhightower/envconfig"
@@ -17,10 +18,6 @@ func ReadEngineConfig() (engine.EngineConfig, error) {
 		return cfg, errors.Wrap(err, "error processing engine config")
 	}
 
-	if cfg.Passphrase == "" {
-		return engine.EngineConfig{}, ErrEmptyPassphrase
-	}
-
 	return cfg, nil
 }
 
@@ -31,10 +28,6 @@ func ReadServerConfig() (server.ServerConfig, error) {
 		return cfg, errors.Wrap(err, "error processing server config")
 	}
 
-	if cfg.Port == 0 {
-		return server.ServerConfig{}, ErrEmptyPort
-	}
-
 	return cfg, nil
 }
 
@@ -43,6 +36,16 @@ func ReadAppConfig() (AppConfig, error) {
 
 	if err := envconfig.Process(appPrefix, &cfg); err != nil {
 		return cfg, errors.Wrap(err, "error processing app config")
+	}
+
+	return cfg, nil
+}
+
+func ReadTelegramConfig() (notifier.TelegramConfig, error) {
+	var cfg notifier.TelegramConfig
+
+	if err := envconfig.Process(appPrefix, &cfg); err != nil {
+		return cfg, errors.Wrap(err, "error processing telegram config")
 	}
 
 	return cfg, nil

@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	log "github.com/sirupsen/logrus"
 )
 
 func NewTelegram(cfg TelegramConfig) Notifier {
@@ -31,6 +32,21 @@ func (t *telegramNotifier) Init() error {
 	}
 
 	t.bot = bot
+
+	if t.cfg.IsListen {
+		u := tgbotapi.NewUpdate(0)
+		u.Timeout = 60
+		updates := bot.GetUpdatesChan(u)
+
+		go func() {
+			for update := range updates {
+				if update.Message != nil {
+					log.WithField("chat_id", update.Message.Chat.ID).Info("received message")
+					return
+				}
+			}
+		}()
+	}
 
 	return nil
 }

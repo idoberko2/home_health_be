@@ -67,7 +67,16 @@ func (a *app) init() error {
 		return errCfg
 	}
 
-	engine := engine.New(cfg, notifier.NewLogNotifier())
+	tgCfg, tgErr := ReadTelegramConfig()
+	if tgErr != nil {
+		return tgErr
+	}
+	notifier := notifier.NewTelegram(tgCfg)
+	if err := notifier.Init(); err != nil {
+		return err
+	}
+
+	engine := engine.New(cfg, notifier)
 	if err := engine.Init(); err != nil {
 		return err
 	}
