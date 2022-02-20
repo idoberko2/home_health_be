@@ -17,6 +17,7 @@ type Server interface {
 
 func New(e engine.Engine, cfg ServerConfig) Server {
 	r := mux.NewRouter()
+	r.HandleFunc("/is_alive", GetIsAliveHandler(e)).Methods(http.MethodGet)
 	r.HandleFunc("/ping", GetPingHandler(e)).Methods(http.MethodPost)
 
 	return &server{

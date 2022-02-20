@@ -16,7 +16,7 @@ import (
 )
 
 type App interface {
-	Run()
+	Run(ctx context.Context)
 }
 
 func New() App {
@@ -30,7 +30,7 @@ type app struct {
 	errReporter chan error
 }
 
-func (a *app) Run() {
+func (a *app) Run(ctx context.Context) {
 	appConfig, err := ReadAppConfig()
 	if err != nil {
 		log.WithError(err).Fatal("error reading app config")
@@ -43,7 +43,7 @@ func (a *app) Run() {
 		}
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	gracefulShutdown(cancel)
 
 	if err := a.init(); err != nil {
