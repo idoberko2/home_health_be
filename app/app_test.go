@@ -1,3 +1,5 @@
+//go:build integration
+
 package app
 
 import (
@@ -12,15 +14,20 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
+
+/**
+This is a full E2E integration tests. It sets up the environment, sends a ping which updates the
+state to "Healthy", then waits 6 seconds for the state to become "Unhealthy".
+
+You should monitor the configured TG group when running the test. You expect to see:
+1. A "Healthy" message arrives immediately
+2. An "Unhealthy" message arrives 5 seconds later
+*/
 
 type IntegrationTestSuite struct {
 	suite.Suite
-	botReader *tgbotapi.BotAPI
 	appCancel context.CancelFunc
 	srvPort   int
 	c         http.Client
@@ -28,14 +35,7 @@ type IntegrationTestSuite struct {
 
 func (suite *IntegrationTestSuite) SetupSuite() {
 	suite.Require().NoError(godotenv.Load())
-	testToken := os.Getenv("HC_TEST_TOKEN")
-	suite.Require().NotEmpty(testToken)
 
-	bot, err := tgbotapi.NewBotAPI(testToken)
-	suite.Require().NoError(err)
-	bot.Debug = true
-
-	suite.botReader = bot
 	suite.c = http.Client{}
 	suite.c.Timeout = 200 * time.Millisecond
 	suite.setupEnv()
@@ -43,7 +43,7 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 
 func (suite *IntegrationTestSuite) SetupTest() {
 	a := New()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	suite.appCancel = cancel
 	go a.Run(ctx)
 	suite.waitUntilServerReady()
@@ -83,14 +83,13 @@ func (suite *IntegrationTestSuite) waitUntilServerReady() {
 	}
 }
 
-func (suite *IntegrationTestSuite) TestHealthy() {
+func (suite *IntegrationTestSuite) TestIntegration() {
 	passphrase := os.Getenv("HC_PASSPHRASE")
 	resp, err := suite.c.Post(fmt.Sprintf("http://localhost:%d/ping", suite.srvPort), "application/json", strings.NewReader(fmt.Sprintf("{\"passphrase\": \"%s\"}", passphrase)))
 	suite.Require().NoError(err)
 	suite.Assert().Equal(http.StatusOK, resp.StatusCode)
 
-	actual := suite.awaitMessage()
-	suite.Assert().Equal("State changed to 'Healthy'", actual)
+	<-time.After(6 * time.Second)
 }
 
 func (suite *IntegrationTestSuite) setupEnv() {
@@ -100,24 +99,7 @@ func (suite *IntegrationTestSuite) setupEnv() {
 	suite.Require().NoError(listener.Close())
 	os.Setenv("HC_PORT", strconv.Itoa(suite.srvPort))
 	os.Setenv("HC_SAMPLE_RATE", "100ms")
-	os.Setenv("HC_GRACE_PERIOD", "10s")
-}
-
-func (suite *IntegrationTestSuite) awaitMessage() string {
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
-
-	for {
-		select {
-		case update := <-suite.botReader.GetUpdatesChan(u):
-			if update.Message != nil {
-				logrus.WithField("message", update.Message).Info("received message")
-				return update.Message.Text
-			}
-		case <-time.After(3 * time.Second):
-			suite.FailNow("waited too long for message")
-		}
-	}
+	os.Setenv("HC_GRACE_PERIOD", "5s")
 }
 
 func TestIntegrationSuite(t *testing.T) {
