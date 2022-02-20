@@ -2,12 +2,12 @@ package engine
 
 import (
 	"context"
-	"errors"
 
 	"github.com/idoberko2/home_health_be/general"
 	"github.com/idoberko2/home_health_be/healthcheck"
 	"github.com/idoberko2/home_health_be/notifier"
 	"github.com/idoberko2/home_health_be/scheduler"
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -38,6 +38,10 @@ type engine struct {
 func (e *engine) Init() error {
 	e.healthCheck = healthcheck.New(e.cfg.HealthCheckConfig)
 	e.scheduler = scheduler.New(e.cfg.SchedulerConfig, e)
+	if err := e.notifier.Init(); err != nil {
+		return errors.Wrap(err, "error initializing notifier")
+	}
+
 	e.ready = true
 
 	return nil
