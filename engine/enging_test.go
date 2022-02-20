@@ -37,6 +37,7 @@ func TestStartNoInit(t *testing.T) {
 
 func TestHealthNoPing(t *testing.T) {
 	notif := &notifierMock{}
+	notif.On("Init").Return(nil)
 	notif.On("NotifyStateChange", mock.Anything).Return(nil)
 	engine := New(testEngineConfig(), notif)
 	err := engine.Init()
@@ -65,6 +66,7 @@ func TestHealthyThenUnhealthy(t *testing.T) {
 }
 
 func engineTestHelpert(t *testing.T, notif *notifierMock, duration time.Duration) {
+	notif.On("Init").Return(nil)
 	notif.On("NotifyStateChange", mock.Anything).Return(nil)
 	engine := New(testEngineConfig(), notif)
 	err := engine.Init()
