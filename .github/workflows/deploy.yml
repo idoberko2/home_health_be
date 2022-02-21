@@ -34,3 +34,4 @@ jobs:
             ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
             dokku-host: 'idoberko2.com'
             app-name: 'home_health'
+            git-push-flags: '--force'
