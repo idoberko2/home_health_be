@@ -1,5 +1,6 @@
 module github.com/idoberko2/home_health_be
 
+// +heroku goVersion go1.16
 go 1.16
 
 require (
