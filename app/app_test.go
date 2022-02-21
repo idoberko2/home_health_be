@@ -1,4 +1,5 @@
 //go:build integration
+// +build integration
 
 package app
 
@@ -97,7 +98,7 @@ func (suite *IntegrationTestSuite) setupEnv() {
 	suite.Require().NoError(err)
 	suite.srvPort = listener.Addr().(*net.TCPAddr).Port
 	suite.Require().NoError(listener.Close())
-	os.Setenv("HC_PORT", strconv.Itoa(suite.srvPort))
+	os.Setenv("PORT", strconv.Itoa(suite.srvPort))
 	os.Setenv("HC_SAMPLE_RATE", "100ms")
 	os.Setenv("HC_GRACE_PERIOD", "5s")
 }
